@@ -1,3 +1,5 @@
+require('dotenv/config');
+
 const url = "https://api.github.com/users/";
 let json = {};
 let p = document.getElementsByTagName("p")[0];
@@ -17,12 +19,14 @@ async function inicia() {
   if (localStorage.getItem(input.value) === null)
     await pesquisaUser(input.value);
   else json = JSON.parse(localStorage.getItem(input.value));
-  mostraResultados();
+  if (json) mostraResultados();
+  else p.innerText = "Usuário não encontrado.";
 }
 
 async function pesquisaUser(user) {
-  json = {};
+  json = null;
   let result = await acessaApi(url + user + "/followers");
+  if (result.message === "Not Found") return;
   json = { usuario: user, quant_followers: result.length, followers: [] };
   for (let i = 0; i < result.length; i++) {
     json.followers.push({
@@ -49,7 +53,11 @@ async function pegaRepositoriosUser(user) {
 }
 
 function mostraResultados() {
-  let result = `<p>Usuario: ${json.usuario}</p><p>${json.quant_followers} seguidores:</p>`;
+  let result = `<p>Usuario: ${json.usuario}</p><p>${
+    json.quant_followers !== undefined
+      ? json.quant_followers
+      : "O perfil não tem"
+  } seguidores:</p>`;
   let followers = json.followers;
   for (let i = 0; i < followers.length; i++) {
     result += `<p class="user" onclick="mudarEstado(${i})"><b>${
@@ -66,11 +74,8 @@ function mostraResultados() {
 }
 
 async function acessaApi(url) {
-  const response = await fetch(url, {
-    headers: {
-      authorization: "token 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",
-    },
-  });
+  console.log(envy());
+  const response = await fetch(url);
   return await response.json();
 }
 
