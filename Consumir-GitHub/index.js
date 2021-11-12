@@ -1,5 +1,3 @@
-require('dotenv/config');
-
 const url = "https://api.github.com/users/";
 let json = {};
 let p = document.getElementsByTagName("p")[0];
@@ -20,13 +18,20 @@ async function inicia() {
     await pesquisaUser(input.value);
   else json = JSON.parse(localStorage.getItem(input.value));
   if (json) mostraResultados();
-  else p.innerText = "Usuário não encontrado.";
 }
 
 async function pesquisaUser(user) {
   json = null;
   let result = await acessaApi(url + user + "/followers");
-  if (result.message === "Not Found") return;
+  console.log(result);
+  if (result === null) {
+    p.innerText = "Rate limit da API esgotado.";
+    return;
+  }
+  if (result.message === "Not Found") {
+    p.innerText = "Usuário não encontrado.";
+    return;
+  }
   json = { usuario: user, quant_followers: result.length, followers: [] };
   for (let i = 0; i < result.length; i++) {
     json.followers.push({
@@ -74,8 +79,8 @@ function mostraResultados() {
 }
 
 async function acessaApi(url) {
-  console.log(envy());
   const response = await fetch(url);
+  if (response.status === 403) return null;
   return await response.json();
 }
 
